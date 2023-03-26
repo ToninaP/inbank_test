@@ -1,0 +1,47 @@
+--adding columns from other tables and filtering data
+CREATE OR REPLACE  TEMP TABLE test_inbank.public.agg_monthly_payments
+AS
+SELECT 
+    user_id_sender,
+    amount,
+    currency,
+    transaction_date,
+    exchange_date,
+    currency_code,
+    exchange_rate_to_eur
+FROM
+    payments AS p
+LEFT JOIN
+    currencies ON p.currency = currencies.currency_id
+LEFT JOIN
+    currency_rates ON p.currency = currency_rates.currency_id 
+    AND p.transaction_date = currency_rates.exchange_date
+LEFT JOIN
+    blacklist on p.user_id_sender = blacklist.user_id
+WHERE
+    end_date IS null
+AND
+    blacklist_code IS null;
+
+--calculating transactions in eur
+CREATE OR REPLACE TEMP TABLE test_inbank.public.agg_monthly_payments2
+AS
+SELECT
+    amount,
+    exchange_rate_to_eur,
+    transaction_date,
+    CASE
+        WHEN exchange_rate_to_eur IS not null THEN amount*exchange_rate_to_eur
+        ELSE amount 
+    END as amount_eur
+FROM
+    agg_monthly_payments;
+    
+-- aggregating results by transaction date
+SELECT
+    transaction_date,
+    SUM(amount_eur) AS daily_transactions_eur
+FROM
+    agg_monthly_payments2
+GROUP BY
+    transaction_date
