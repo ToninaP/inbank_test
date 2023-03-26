@@ -1,0 +1,20 @@
+import pandas as pd
+import io
+from google.colab import files
+import datetime
+
+# this is how you input data if you run the script locally (Jupyter, Spyder, etc.)
+# insert files pathnames in ''
+df1 = pd.read_csv('/Users/CUDAN/Documents/python notebooks/inbank test/weekend_data_processing/data_2023-02-11.csv', sep = ';')
+df2 = pd.read_csv('/Users/CUDAN/Documents/python notebooks/inbank test/weekend_data_processing/data_2023-02-12.csv', sep = ';')
+
+# Combining datasets into one dataframe
+df_combined = pd.concat([df1, df2])
+
+# Adding a new column with the generation date
+df_combined['file_creation_date'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+# Saving the combined df to a new CSV file
+df_combined.to_csv('sat_and_sun_data.csv', index=False)
+
+print(df_combined)
